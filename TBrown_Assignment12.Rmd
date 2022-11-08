@@ -1,0 +1,93 @@
+---
+title: "TBrown Assignment 12"
+author: "Tyler Brown"
+date: "`r Sys.Date()`"
+output: html_document
+---
+## Problem
+
+The attached who.csv dataset contains real-world data from 2008. The variables included follow.
+
+Country: name of the country
+
+LifeExp: average life expectancy for the country in years
+
+InfantSurvival: proportion of those surviving to one year or more
+
+Under5Survival: proportion of those surviving to five years or more
+
+TBFree: proportion of the population without TB.
+
+PropMD: proportion of the population who are MDs
+
+PropRN: proportion of the population who are RNs
+
+PersExp: mean personal expenditures on healthcare in US dollars at average exchange rate
+
+GovtExp: mean government expenditures per capita on healthcare, US dollars at average exchange rate
+
+TotExp: sum of personal and government expenditures.
+
+## Libraries
+```{r Libraries}
+library(tidyverse)
+```
+
+
+## Load the Data
+```{r Load Data}
+df = read.csv("https://raw.githubusercontent.com/AlphaCurse/DATA-605/main/who.csv")
+head(df)
+```
+
+1. Provide a scatterplot of LifeExp~TotExp, and run simple linear regression. Do not transform the
+variables. Provide and interpret the F statistics, R^2, standard error,and p-values only. Discuss
+whether the assumptions of simple linear regression met.
+```{r Scatterplot of LifeExp~TotExp}
+df %>%
+  ggplot(aes(LifeExp, TotExp, col=LifeExp)) + geom_point(size=4, alpha=.5) + geom_smooth(method="lm")
+
+plot(lm(data=df, df$LifeExp~df$TotExp))
+```
+
+```{r Statistics}
+summary(lm(LifeExp~TotExp, data=df))
+```
+As shown above, the assumptions of simple linear regression are not met. The p-value is close to 0. The F-Statistic is 65.26, which states there is a strong relationship between the dependent and independent variables. The standard error states the residuals are spread out when compared to the fitted line. The R-squared figures only fits 25% of data. The normal Q-Q plot states the residuals are not following the normal distribution line.
+
+
+2. Raise life expectancy to the 4.6 power (i.e., LifeExp^4.6). Raise total expenditures to the 0.06 power (nearly a log transform, TotExp^.06). Plot LifeExp^4.6 as a function of TotExp^.06, and r re-run the simple regression model using the transformed variables. Provide and interpret the F statistics, R^2, standard error, and p-values. Which model is "better?"
+```{r First Alternate Statistics}
+alt_df = df %>%
+  mutate(alt_le = LifeExp^4.6) %>%
+  mutate(alt_te = TotExp^.06)
+
+summary(lm(alt_le ~ alt_te, data=alt_df))
+plot(lm(data=alt_df, alt_df$alt_le~alt_df$alt_te))
+```
+As shown above, the assumptions of simple linear regression are met. The p-value is close to 0. The standard error is very high at 90,490,000. The R-squared figures only fits 25% of data. The normal Q-Q plot states the residuals are closer to the normal distribution line.
+
+
+3. Using the results from 3, forecast life expectancy when TotExp^.06 =1.5. Then forecast life expectancy when TotExp^.06=2.5.
+```{r Forecast 1.5}
+exp(log(-736527910 + 620060216*(1.5))/4.6)
+```
+```{r Forecast 2.5}
+exp(log(-736527910 + 620060216*(2.5))/4.6)
+```
+
+4. Build the following multiple regression model and interpret the F Statistics, R^2, standard error, and p-values. How good is the model?
+
+LifeExp = b0+b1 x PropMd + b2 x TotExp +b3 x PropMD x TotExp
+```{r}
+summary(lm(data=df, LifeExp~PropMD + TotExp + PropMD*TotExp))
+plot(lm(df$LifeExp~df$TotExp + df$PropMD + df$PropMD * df$TotExp))
+```
+The assumptions for linear regression were not met with this model's results. The p-value is close to 0. The R-squared figures are 35% of the data. The standard error is 8.7, which means the residuals are 8.7 years from fitted model on average. The normal Q-Q plot shows the residuals following the normal line.
+
+
+5. Forecast LifeExp when PropMD=.03 and TotExp = 14. Does this forecast seem realistic? Why or why not?
+```{r}
+6.277e+01 + 7.233e-05*(14) + 1.497e+03*(.03) - 6.026e-03*(14)*(.03)
+```
+The forecast states the life expectancy is about 107 years, therefore it is not realistic. The total expenditures is 14 billion with 3% of the populations being doctors.
